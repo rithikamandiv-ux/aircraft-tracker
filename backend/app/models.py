@@ -21,6 +21,13 @@ class Aircraft(BaseModel):
     on_ground: bool
     last_contact: int               # Unix timestamp
 
+class SnapshotMessage(BaseModel):
+    """The payload pushed to every connected client."""
+
+    type: str = "snapshot"
+    fetched_at: int          # Unix timestamp of the OpenSky fetch
+    stale: bool = False      # True when serving the last good data after a failure
+    aircraft: list[Aircraft]
 
 def normalize_state(state: list) -> Aircraft | None:
     """Convert one raw OpenSky state vector into an Aircraft.
