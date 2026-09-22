@@ -5,7 +5,7 @@ import time
 from app.config import Settings
 from app.connection_manager import ConnectionManager
 from app.models import SnapshotMessage
-from app.opensky_client import OpenSkyClient
+from app.opensky_client import OpenSkyClient, RateLimitedError
 
 logger = logging.getLogger(__name__)
 
@@ -79,23 +79,35 @@ class Poller:
     async def _run(self) -> None:
         """The polling loop itself."""
         while True:
+            wait_s = self._settings.poll_interval_s
             try:
                 await self._poll_once()
+            except RateLimitedError as exc:
+                wait_s = exc.retry_after_s
+                logger.warning(
+                    "Rate limited by OpenSky; pausing polling for %.0fs", wait_s
+                )
+                await self._mark_stale_and_broadcast()
             except asyncio.CancelledError:
                 raise
             except Exception:
                 logger.exception("Unexpected error in polling loop")
 
-            await asyncio.sleep(self._settings.poll_interval_s)
+            await asyncio.sleep(wait_s)
+
+    async def _mark_stale_and_broadcast(self) -> None:
+        if self._latest is not None and not self._latest.stale:
+            self._latest = self._latest.model_copy(update={"stale": True})
+            await self._manager.broadcast(self._latest)
 
     async def _poll_once(self) -> None:
         try:
             aircraft = await self._client.get_states(self._settings.region)
+        except RateLimitedError:
+            raise  # Handled by _run, which controls the wait duration
         except Exception as exc:
             logger.warning("OpenSky fetch failed: %s", exc)
-            if self._latest is not None:
-                self._latest = self._latest.model_copy(update={"stale": True})
-                await self._manager.broadcast(self._latest)
+            await self._mark_stale_and_broadcast()
             return
 
         self._latest = SnapshotMessage(
