@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import MapView from "./MapView";
+import Sidebar from "./Sidebar";
 import { useAircraftSocket } from "./useAircraftSocket";
 
 const WS_URL = "ws://127.0.0.1:8000/ws";
@@ -18,13 +19,21 @@ export default function App() {
         </span>
       </header>
 
-      <main className="flex-1">
-        <MapView
+      <div className="flex flex-1 overflow-hidden">
+        <main className="flex-1">
+          <MapView
+            aircraft={aircraft}
+            selectedIcao={selectedIcao}
+            onSelect={setSelectedIcao}
+          />
+        </main>
+
+        <Sidebar
           aircraft={aircraft}
           selectedIcao={selectedIcao}
           onSelect={setSelectedIcao}
         />
-      </main>
+      </div>
     </div>
   );
 }
