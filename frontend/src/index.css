@@ -1,2 +1,7 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
+/* Darken the light OSM tiles to match the interface.
+   Only affects the tile layer, so markers keep their real colours. */
+   .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9);
+  }

@@ -17,11 +17,15 @@ class Settings(BaseSettings):
     opensky_client_id: str
     opensky_client_secret: str
 
-    # Region: Sri Lanka and surrounding airspace (7x7 degrees = 2 API credits)
-    region_lamin: float = 4.0
-    region_lomin: float = 77.0
-    region_lamax: float = 11.0
-    region_lomax: float = 84.0
+        # Region: South Asia (Sri Lanka, southern India, Maldives)
+    # 14 x 16 degrees = 224 sq deg, so 3 API credits per request.
+    # Sri Lanka alone has almost no ADS-B receiver coverage in OpenSky's
+    # volunteer network, so the box is widened to include denser airspace
+    # around Bengaluru, Chennai, Kochi and Male.
+    region_lamin: float = 2.0
+    region_lomin: float = 72.0
+    region_lamax: float = 16.0
+    region_lomax: float = 88.0
 
     # Polling behaviour
     poll_interval_s: float = Field(default=30.0, ge=5.0)
