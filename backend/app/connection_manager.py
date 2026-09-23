@@ -35,14 +35,14 @@ class ConnectionManager:
             return
 
         payload = message.model_dump_json()
+        targets = list(self._connections)  # single snapshot, used for both
 
-        # Iterate over a copy: a client may disconnect mid-broadcast
         results = await asyncio.gather(
-            *(ws.send_text(payload) for ws in list(self._connections)),
+            *(ws.send_text(payload) for ws in targets),
             return_exceptions=True,
         )
 
-        for websocket, result in zip(list(self._connections), results):
+        for websocket, result in zip(targets, results):
             if isinstance(result, Exception):
                 logger.warning("Dropping client after send failure: %s", result)
                 self._connections.discard(websocket)

@@ -13,6 +13,7 @@ TOKEN_URL = (
 STATES_URL = "https://opensky-network.org/api/states/all"
 TOKEN_REFRESH_MARGIN_S = 60
 
+
 class RateLimitedError(Exception):
     """Raised when OpenSky reports the credit budget is exhausted."""
 
@@ -35,7 +36,10 @@ class OpenSkyClient:
 
     async def _get_token(self) -> str:
         # Reuse the cached token unless it is about to expire
-        if self._token and time.monotonic() < self._token_expires_at - TOKEN_REFRESH_MARGIN_S:
+        if (
+            self._token
+            and time.monotonic() < self._token_expires_at - TOKEN_REFRESH_MARGIN_S
+        ):
             return self._token
 
         response = await self._http.post(
@@ -54,20 +58,20 @@ class OpenSkyClient:
         return self._token
 
     async def get_states(self, bbox: BoundingBox) -> list[Aircraft]:
-            response = await self._request_states(bbox)
+        response = await self._request_states(bbox)
 
         # The cached token may have been revoked early: refresh once and retry
-            if response.status_code == 401:
-                logger.info("Token rejected; refreshing and retrying once")
-            self._invalidate_token()
-            response = await self._request_states(bbox)
+        if response.status_code == 401:
+            logger.info("Token rejected; refreshing and retrying once")
+        self._invalidate_token()
+        response = await self._request_states(bbox)
 
-            if response.status_code == 429:
-                raise RateLimitedError(self._retry_after_seconds(response))
+        if response.status_code == 429:
+            raise RateLimitedError(self._retry_after_seconds(response))
 
-            response.raise_for_status()
-            raw_states = response.json().get("states") or []
-            return [a for s in raw_states if (a := normalize_state(s)) is not None]
+        response.raise_for_status()
+        raw_states = response.json().get("states") or []
+        return [a for s in raw_states if (a := normalize_state(s)) is not None]
 
     @staticmethod
     def _retry_after_seconds(response: httpx.Response) -> float:

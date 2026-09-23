@@ -9,25 +9,27 @@ class BoundingBox(BaseModel):
 
 
 class Aircraft(BaseModel):
-    icao24: str                     # unique transponder address
+    icao24: str  # unique transponder address
     callsign: str | None
     origin_country: str
     latitude: float
     longitude: float
     baro_altitude_m: float | None
     velocity_ms: float | None
-    heading_deg: float | None       # OpenSky calls this "true_track"
+    heading_deg: float | None  # OpenSky calls this "true_track"
     vertical_rate_ms: float | None
     on_ground: bool
-    last_contact: int               # Unix timestamp
+    last_contact: int  # Unix timestamp
+
 
 class SnapshotMessage(BaseModel):
     """The payload pushed to every connected client."""
 
     type: str = "snapshot"
-    fetched_at: int          # Unix timestamp of the OpenSky fetch
-    stale: bool = False      # True when serving the last good data after a failure
+    fetched_at: int  # Unix timestamp of the OpenSky fetch
+    stale: bool = False  # True when serving the last good data after a failure
     aircraft: list[Aircraft]
+
 
 def normalize_state(state: list) -> Aircraft | None:
     """Convert one raw OpenSky state vector into an Aircraft.
