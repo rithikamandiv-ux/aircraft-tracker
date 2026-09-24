@@ -58,12 +58,11 @@ class Poller:
     async def _stop_after_grace(self) -> None:
         try:
             await asyncio.sleep(self._settings.poller_grace_period_s)
-        except (
-            asyncio.CancelledError
-        ):  # NOSONAR: cancellation is the "client returned" signal
-            # ensure_running() cancels this timer deliberately. Re-raising
-            # would defeat the grace-period feature.
-            return  # A client reconnected; do not stop
+        except asyncio.CancelledError:  # NOSONAR
+            # Cancellation is the "client returned" signal: ensure_running()
+            # cancels this timer deliberately, so re-raising would defeat
+            # the grace-period feature.
+            return
 
         if self._manager.client_count == 0:
             await self.stop()
