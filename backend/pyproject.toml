@@ -1,0 +1,12 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+addopts = "-ra"
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.ruff]
+line-length = 88
