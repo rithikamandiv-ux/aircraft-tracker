@@ -1,10 +1,11 @@
-import time
 import logging
+import time
+
 import httpx
 
-logger = logging.getLogger(__name__)
-
 from app.models import Aircraft, BoundingBox, normalize_state
+
+logger = logging.getLogger(__name__)
 
 TOKEN_URL = (
     "https://auth.opensky-network.org/auth/realms/opensky-network"
@@ -63,8 +64,8 @@ class OpenSkyClient:
         # The cached token may have been revoked early: refresh once and retry
         if response.status_code == 401:
             logger.info("Token rejected; refreshing and retrying once")
-        self._invalidate_token()
-        response = await self._request_states(bbox)
+            self._invalidate_token()
+            response = await self._request_states(bbox)
 
         if response.status_code == 429:
             raise RateLimitedError(self._retry_after_seconds(response))
@@ -72,6 +73,14 @@ class OpenSkyClient:
         response.raise_for_status()
         raw_states = response.json().get("states") or []
         return [a for s in raw_states if (a := normalize_state(s)) is not None]
+
+    async def _request_states(self, bbox: BoundingBox) -> httpx.Response:
+        token = await self._get_token()
+        return await self._http.get(
+            STATES_URL,
+            params=bbox.model_dump(),
+            headers={"Authorization": f"Bearer {token}"},
+        )
 
     @staticmethod
     def _retry_after_seconds(response: httpx.Response) -> float:

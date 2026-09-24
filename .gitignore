@@ -1,0 +1,12 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets
+.env
+credentials.json
+
+# macOS
+.DS_Store
+.envrc
