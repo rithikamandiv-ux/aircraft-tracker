@@ -1,14 +1,34 @@
 import type { Aircraft } from "./types";
 import { formatAltitude, formatSpeed } from "./format";
 import AircraftDetail from "./AircraftDetail";
+import type { FeedState } from "./feedState";
 
 interface SidebarProps {
   aircraft: Aircraft[];
   selectedIcao: string | null;
   onSelect: (icao24: string | null) => void;
+  feed: FeedState;
 }
 
-export default function Sidebar({ aircraft, selectedIcao, onSelect }: SidebarProps) {
+function EmptyList({ feed }: { feed: FeedState }) {
+    if (feed === "loading") {
+      return <p className="p-4 text-sm text-slate-500">Waiting for the first update...</p>;
+    }
+    if (feed === "reconnecting") {
+      return <p className="p-4 text-sm text-slate-500">Not connected to the server.</p>;
+    }
+    return (
+      <div className="p-4 text-sm text-slate-500">
+        <p className="text-slate-300">No aircraft in range right now.</p>
+        <p className="mt-2">
+          Coverage comes from OpenSky&apos;s volunteer receiver network, which is
+          sparse over this region, so traffic can be intermittent.
+        </p>
+      </div>
+    );
+  }
+
+export default function Sidebar({ aircraft, selectedIcao, onSelect, feed }: SidebarProps) {
   const selected = aircraft.find((a) => a.icao24 === selectedIcao) ?? null;
 
   // Sort by callsign so the list order stays stable between updates
@@ -28,6 +48,9 @@ export default function Sidebar({ aircraft, selectedIcao, onSelect }: SidebarPro
         </h2>
       </div>
 
+    {aircraft.length === 0 ? (
+      <EmptyList feed={feed} />
+      ) : (
       <ul className="flex-1 overflow-y-auto">
         {sorted.map((a) => {
           const isSelected = a.icao24 === selectedIcao;
@@ -57,7 +80,8 @@ export default function Sidebar({ aircraft, selectedIcao, onSelect }: SidebarPro
             </li>
           );
         })}
-      </ul>
+        </ul>
+      )}
     </aside>
   );
 }

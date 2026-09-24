@@ -31,9 +31,8 @@ export function formatVerticalRate(metresPerSecond: number | null): string {
 }
 
 /** Seconds since a Unix timestamp, described in words. */
-export function formatAge(unixSeconds: number): string {
-  const seconds = Math.max(0, Math.floor(Date.now() / 1000 - unixSeconds));
-  if (seconds < 60) return `${seconds}s ago`;
-  const minutes = Math.floor(seconds / 60);
-  return `${minutes}m ago`;
-}
+export function formatAge(unixSeconds: number, nowMs: number = Date.now()): string {
+    const seconds = Math.max(0, Math.floor(nowMs / 1000 - unixSeconds));
+    if (seconds < 60) return `${seconds}s ago`;
+    return `${Math.floor(seconds / 60)}m ago`;
+  }
