@@ -13,12 +13,14 @@ export function formatSpeed(metresPerSecond: number | null): string {
   return `${Math.round(metresPerSecond * MS_TO_KNOTS)} kt`;
 }
 
-/** Heading as degrees plus compass point, e.g. "045 deg (NE)". */
+/** Heading in aviation style, 001 to 360 where north is 360, e.g. "045 deg (NE)". */
 export function formatHeading(degrees: number | null): string {
   if (degrees === null) return "unknown";
+  const rounded = Math.round(degrees) % 360;
+  const display = rounded === 0 ? 360 : rounded;
   const points = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   const index = Math.round(degrees / 45) % 8;
-  return `${Math.round(degrees).toString().padStart(3, "0")} deg (${points[index]})`;
+  return `${display.toString().padStart(3, "0")} deg (${points[index]})`;
 }
 
 /** Vertical rate described in words, since the raw number means little. */
