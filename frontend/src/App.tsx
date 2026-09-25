@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-
+import { useState } from "react";
 import FeedBanner from "./FeedBanner";
 import MapView from "./MapView";
 import Sidebar from "./Sidebar";
@@ -17,12 +16,17 @@ export default function App() {
 
   const feed = deriveFeedState(status, fetchedAt, stale, nowMs);
 
-  // Clear the selection if that aircraft leaves the region
-  useEffect(() => {
+  const [prevAircraft, setPrevAircraft] = useState(aircraft);
+
+  // When a new snapshot arrives, drop a selection whose aircraft has left the
+  // region. Adjusting state during render means React re-renders immediately,
+  // before anything is committed, so no frame ever shows a dangling selection.
+  if (aircraft !== prevAircraft) {
+    setPrevAircraft(aircraft);
     if (selectedIcao !== null && !aircraft.some((a) => a.icao24 === selectedIcao)) {
       setSelectedIcao(null);
     }
-  }, [aircraft, selectedIcao]);
+  }
 
   const mapOverlay =
     feed === "loading"
