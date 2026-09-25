@@ -1,7 +1,8 @@
 """Builders for test data, so tests describe only what they care about."""
 
 import httpx
-
+import asyncio
+from collections.abc import Callable
 
 def make_state(
     icao24: str = "abc123",
@@ -76,3 +77,33 @@ class FakeOpenSky:
             return self._state_responses.pop(0)
 
         raise AssertionError(f"Unexpected request: {request.url}")
+
+# Captured at import so tests that patch asyncio.sleep cannot affect it
+_real_sleep = asyncio.sleep
+
+
+async def wait_until(predicate: Callable[[], object], timeout: float = 1.0) -> None:
+    """Poll a condition until it holds, instead of sleeping a fixed time."""
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    while not predicate():
+        if loop.time() > deadline:
+            raise AssertionError("Condition not met within timeout")
+        await _real_sleep(0.01)
+
+
+class FakeWebSocket:
+    """Records what the server sends; can be told to fail like a dead client."""
+
+    def __init__(self, fail_on_send: bool = False) -> None:
+        self.accepted = False
+        self.sent: list[str] = []
+        self._fail_on_send = fail_on_send
+
+    async def accept(self) -> None:
+        self.accepted = True
+
+    async def send_text(self, data: str) -> None:
+        if self._fail_on_send:
+            raise RuntimeError("Connection closed")
+        self.sent.append(data)

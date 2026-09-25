@@ -42,7 +42,7 @@ async def lifespan(app: FastAPI):
     yield  # ---- the application runs here ----
 
     # Shutdown: stop the poller first, then close the connection it uses
-    await app.state.poller.stop()
+    await app.state.poller.close()
     await http.aclose()
     logger.info("Shutdown complete.")
 

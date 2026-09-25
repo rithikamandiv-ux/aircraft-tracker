@@ -86,6 +86,13 @@ class Poller:
 
         logger.info("Poller stopped (no clients connected)")
 
+    async def close(self) -> None:
+        """Full shutdown: cancel any pending grace timer, then stop polling."""
+        if self._stop_timer is not None:
+            self._stop_timer.cancel()
+            self._stop_timer = None
+        await self.stop()
+
     async def _run(self) -> None:
         """The polling loop itself."""
         while True:
