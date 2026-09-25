@@ -1,8 +1,10 @@
 """Builders for test data, so tests describe only what they care about."""
 
-import httpx
 import asyncio
 from collections.abc import Callable
+
+import httpx
+
 
 def make_state(
     icao24: str = "abc123",
@@ -77,6 +79,7 @@ class FakeOpenSky:
             return self._state_responses.pop(0)
 
         raise AssertionError(f"Unexpected request: {request.url}")
+
 
 # Captured at import so tests that patch asyncio.sleep cannot affect it
 _real_sleep = asyncio.sleep

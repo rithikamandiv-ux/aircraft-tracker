@@ -154,3 +154,12 @@ async def test_rate_limit_pauses_the_loop_for_the_server_hint(
     await wait_until(lambda: requested_sleeps)
 
     assert requested_sleeps == [120.0]
+
+
+async def test_unexpected_errors_are_not_disguised_as_outages(poller, fake_opensky):
+    # A state vector too short to normalize raises IndexError: a data or code
+    # bug, which must propagate for a full traceback, not be logged as an outage
+    fake_opensky.queue_states(states_response(["too-short"]))
+
+    with pytest.raises(IndexError):
+        await poller._poll_once()

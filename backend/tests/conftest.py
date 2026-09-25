@@ -1,11 +1,14 @@
 import httpx
 import pytest
+from fastapi.testclient import TestClient
 
 from app.config import Settings
-from app.opensky_client import OpenSkyClient
-from tests.factories import FakeOpenSky
 from app.connection_manager import ConnectionManager
+from app.main import create_app
+from app.opensky_client import OpenSkyClient
 from app.poller import Poller
+from tests.factories import FakeOpenSky
+
 
 @pytest.fixture
 def settings() -> Settings:
@@ -28,6 +31,7 @@ async def opensky_client(fake_opensky: FakeOpenSky):
     async with httpx.AsyncClient(transport=transport) as http:
         yield OpenSkyClient("test-id", "test-secret", http)
 
+
 @pytest.fixture
 def manager() -> ConnectionManager:
     return ConnectionManager()
@@ -38,3 +42,13 @@ async def poller(opensky_client, manager, settings):
     poller = Poller(client=opensky_client, manager=manager, settings=settings)
     yield poller
     await poller.close()  # never leave a background task running after a test
+
+
+@pytest.fixture
+def client(settings, fake_opensky):
+    app = create_app(
+        settings=settings,
+        transport=httpx.MockTransport(fake_opensky.handler),
+    )
+    with TestClient(app) as client:
+        yield client

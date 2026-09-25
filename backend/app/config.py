@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     opensky_client_id: str
     opensky_client_secret: str
 
-        # Region: South Asia (Sri Lanka, southern India, Maldives)
+    # Region: South Asia (Sri Lanka, southern India, Maldives)
     # 14 x 16 degrees = 224 sq deg, so 3 API credits per request.
     # Sri Lanka alone has almost no ADS-B receiver coverage in OpenSky's
     # volunteer network, so the box is widened to include denser airspace

@@ -2,6 +2,8 @@ import asyncio
 import logging
 import time
 
+import httpx
+
 from app.config import Settings
 from app.connection_manager import ConnectionManager
 from app.models import SnapshotMessage
@@ -104,11 +106,13 @@ class Poller:
                 logger.warning(
                     "Rate limited by OpenSky; pausing polling for %.0fs", wait_s
                 )
-                await self._mark_stale_and_broadcast()
             except asyncio.CancelledError:
                 raise
             except Exception:
+                # Anything reaching here is a bug, not an outage. Log the full
+                # traceback, keep serving the last good data, keep the loop alive.
                 logger.exception("Unexpected error in polling loop")
+                await self._mark_stale_and_broadcast()
 
             await asyncio.sleep(wait_s)
 
@@ -120,9 +124,11 @@ class Poller:
     async def _poll_once(self) -> None:
         try:
             aircraft = await self._client.get_states(self._settings.region)
-        except RateLimitedError:
-            raise  # Handled by _run, which controls the wait duration
-        except Exception as exc:
+        except (httpx.HTTPError, ValueError) as exc:
+            # Expected operational failures: network errors, HTTP error
+            # statuses, malformed JSON, data that fails validation.
+            # RateLimitedError is deliberately not caught here; _run owns
+            # the back-off timing.
             logger.warning("OpenSky fetch failed: %s", exc)
             await self._mark_stale_and_broadcast()
             return
